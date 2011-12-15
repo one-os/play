@@ -6,7 +6,7 @@ import org.apache.commons.mail.Email;
 
 import play.libs.Mail;
 
-public class ProductionMailSystem implements MailSystem {
+class ProductionMailSystem implements MailSystem {
 
     @Override
     public Future<Boolean> sendMessage(Email email) {
