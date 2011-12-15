@@ -14,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.*;
@@ -33,7 +34,6 @@ public class Mail {
     public static Future<Boolean> send(Email email) {
         try {
             email = buildMessage(email);
-
             if (Play.configuration.getProperty("mail.smtp", "").equals("mock") && Play.mode == Play.Mode.DEV) {
                 Mock.send(email);
                 return new Future<Boolean>() {
@@ -305,28 +305,11 @@ public class Mail {
 
                 content.append("\n\tFrom: " + email.getFromAddress().getAddress());
                 content.append("\n\tReplyTo: " + ((InternetAddress) email.getReplyToAddresses().get(0)).getAddress());
-                content.append("\n\tTo: ");
-                for (Object add : email.getToAddresses()) {
-                    content.append(add.toString() + ", ");
-                }
-                // remove the last ,
-                content.delete(content.length() - 2, content.length());
-                if (email.getCcAddresses() != null && !email.getCcAddresses().isEmpty()) {
-                    content.append("\n\tCc: ");
-                    for (Object add : email.getCcAddresses()) {
-                        content.append(add.toString() + ", ");
-                    }
-                    // remove the last ,
-                    content.delete(content.length() - 2, content.length());
-                }
-                 if (email.getBccAddresses() != null && !email.getBccAddresses().isEmpty()) {
-                    content.append("\n\tBcc: ");
-                    for (Object add : email.getBccAddresses()) {
-                        content.append(add.toString() + ", ");
-                    }
-                    // remove the last ,
-                    content.delete(content.length() - 2, content.length());
-                }
+
+                addAddresses(content, "To",  email.getToAddresses());
+                addAddresses(content, "Cc",  email.getCcAddresses());
+                addAddresses(content, "Bcc", email.getBccAddresses());
+
                 content.append("\n\tSubject: " + email.getSubject());
                 content.append("\n\t" + body);
 
@@ -342,6 +325,23 @@ public class Mail {
                 Logger.error(e, "error sending mock email");
             }
 
+        }
+
+
+        private static void addAddresses(final StringBuffer content,
+                String header, List<?> ccAddresses) {
+            if (ccAddresses != null && !ccAddresses.isEmpty()) {
+                content.append("\n\t" + header + ": ");
+                for (Object add : ccAddresses) {
+                    content.append(add.toString() + ", ");
+                }
+                removeTheLastComma(content);
+            }
+        }
+
+
+        private static void removeTheLastComma(final StringBuffer content) {
+            content.delete(content.length() - 2, content.length());
         }
 
         public static String getLastMessageReceivedBy(String email) {
