@@ -6,8 +6,8 @@ import org.apache.commons.mail.EmailException;
 import play.Logger;
 import play.Play;
 import play.exceptions.MailException;
+import play.libs.mail.DefaultMailSystemFactory;
 import play.libs.mail.MailSystem;
-import play.libs.mail.ProductionMailSystem;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
@@ -59,24 +59,10 @@ public class Mail {
     public static Future<Boolean> send(Email email) {
         try {
             email = buildMessage(email);
-            return mailSystem().sendMessage(email);
+            return new DefaultMailSystemFactory().currentMailSystem().sendMessage(email);
         } catch (EmailException ex) {
             throw new MailException("Cannot send email", ex);
         }
-    }
-
-    private static MailSystem mailSystem() {
-        MailSystem mailSystem;
-        if (useMailMock()) {
-            mailSystem = new LegacyMockMailSystem();
-        } else {
-            mailSystem = new ProductionMailSystem();
-        }
-        return mailSystem;
-    }
-
-    private static boolean useMailMock() {
-        return Play.configuration.getProperty("mail.smtp", "").equals("mock") && Play.mode == Play.Mode.DEV;
     }
 
     public static Email buildMessage(Email email) throws EmailException {
@@ -251,7 +237,7 @@ public class Mail {
         }
     }
 
-    static class LegacyMockMailSystem implements MailSystem {
+    public static class LegacyMockMailSystem implements MailSystem {
 
         @Override
         public Future<Boolean> sendMessage(Email email) {
