@@ -6,6 +6,8 @@ import org.apache.commons.mail.EmailException;
 import play.Logger;
 import play.Play;
 import play.exceptions.MailException;
+import play.libs.mail.MailSystem;
+import play.libs.mail.ProductionMailSystem;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
@@ -58,23 +60,13 @@ public class Mail {
         try {
             email = buildMessage(email);
             if (useMailMock()) {
-                return sendByMock(email);
+                return new LegacyMockMailSystem().sendMessage(email);
             } else {
-                return sendByMySelf(email);
+                return new ProductionMailSystem().sendMessage(email);
             }
         } catch (EmailException ex) {
             throw new MailException("Cannot send email", ex);
         }
-    }
-
-    private static Future<Boolean> sendByMySelf(Email email) {
-        email.setMailSession(getSession());
-        return sendMessage(email);
-    }
-
-    private static Future<Boolean> sendByMock(Email email) {
-        Mock.send(email);
-        return FIXED_FUTURE;
     }
 
     private static boolean useMailMock() {
@@ -256,8 +248,19 @@ public class Mail {
         }
     }
 
+    static class LegacyMockMailSystem implements MailSystem {
+
+        @Override
+        public Future<Boolean> sendMessage(Email email) {
+            Mock.send(email);
+            return FIXED_FUTURE;
+
+        }
+
+    }
+
     /**
-     * Just kept for compatibility reasons, use test double substitution mechanism.
+     * Just kept for compatibility reasons, use test double substitution mechanism instead.
      *
      * @author Andreas Simon <a.simon@quagilis.de>
      */
