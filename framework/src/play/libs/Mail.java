@@ -59,23 +59,26 @@ public class Mail {
     public static Future<Boolean> send(Email email) {
         try {
             email = buildMessage(email);
-            if (useMailMock()) {
-                return new LegacyMockMailSystem().sendMessage(email);
-            } else {
-                return new ProductionMailSystem().sendMessage(email);
-            }
+            return mailSystem().sendMessage(email);
         } catch (EmailException ex) {
             throw new MailException("Cannot send email", ex);
         }
+    }
+
+    private static MailSystem mailSystem() {
+        MailSystem mailSystem;
+        if (useMailMock()) {
+            mailSystem = new LegacyMockMailSystem();
+        } else {
+            mailSystem = new ProductionMailSystem();
+        }
+        return mailSystem;
     }
 
     private static boolean useMailMock() {
         return Play.configuration.getProperty("mail.smtp", "").equals("mock") && Play.mode == Play.Mode.DEV;
     }
 
-    /**
-     *
-     */
     public static Email buildMessage(Email email) throws EmailException {
 
         String from = Play.configuration.getProperty("mail.smtp.from");
