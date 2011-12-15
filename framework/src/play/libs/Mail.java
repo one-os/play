@@ -249,15 +249,13 @@ public class Mail {
         }
     }
 
-    public static class LegacyMockMailSystem implements MailSystem {
-
-        @Override
-        public Future<Boolean> sendMessage(Email email) {
-            Mock.send(email);
-            return new ImmediateFuture();
-        }
-
-    }
+    /**
+     * Just kept for compatibility reasons, use test double substitution mechanism instead.
+     *
+     * @see    Mail#useMailSystem(MailSystem)
+     * @author Andreas Simon <a.simon@quagilis.de>
+     */
+    public static LegacyMockMailSystem Mock = new LegacyMockMailSystem();
 
     /**
      * Just kept for compatibility reasons, use test double substitution mechanism instead.
@@ -265,7 +263,13 @@ public class Mail {
      * @see    Mail#useMailSystem(MailSystem)
      * @author Andreas Simon <a.simon@quagilis.de>
      */
-    public static class Mock {
+    public static class LegacyMockMailSystem implements MailSystem {
+
+        @Override
+        public Future<Boolean> sendMessage(Email email) {
+            LegacyMockMailSystem.send(email);
+            return new ImmediateFuture();
+        }
 
         static Map<String, String> emails = new HashMap<String, String>();
 
