@@ -6,8 +6,7 @@ import org.apache.commons.mail.EmailException;
 import play.Logger;
 import play.Play;
 import play.exceptions.MailException;
-import play.libs.mail.DefaultMailSystemFactory;
-import play.libs.mail.MailSystem;
+import play.libs.mail.*;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
@@ -26,8 +25,9 @@ import java.util.concurrent.*;
  */
 public class Mail {
 
-    public static Session session;
-    public static boolean asynchronousSend = true;
+    public    static Session session;
+    public    static boolean asynchronousSend = true;
+    protected static AbstractMailSystemFactory mailSystemFactory = AbstractMailSystemFactory.DEFAULT;
 
     private static final Future<Boolean> FIXED_FUTURE = new Future<Boolean>() {
 
@@ -59,10 +59,14 @@ public class Mail {
     public static Future<Boolean> send(Email email) {
         try {
             email = buildMessage(email);
-            return new DefaultMailSystemFactory().currentMailSystem().sendMessage(email);
+            return currentMailSystem().sendMessage(email);
         } catch (EmailException ex) {
             throw new MailException("Cannot send email", ex);
         }
+    }
+
+    protected static MailSystem currentMailSystem() {
+        return mailSystemFactory.currentMailSystem();
     }
 
     public static Email buildMessage(Email email) throws EmailException {
