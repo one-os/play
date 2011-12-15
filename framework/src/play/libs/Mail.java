@@ -25,33 +25,25 @@ import java.util.concurrent.*;
  */
 public class Mail {
 
+    private static class StaticMailSystemFactory extends
+            AbstractMailSystemFactory {
+
+        private final MailSystem mailSystem;
+
+        public StaticMailSystemFactory(MailSystem mailSystem) {
+            this.mailSystem = mailSystem;
+        }
+
+        @Override
+        public MailSystem currentMailSystem() {
+            return mailSystem;
+        }
+
+    }
+
     public    static Session session;
     public    static boolean asynchronousSend = true;
     protected static AbstractMailSystemFactory mailSystemFactory = AbstractMailSystemFactory.DEFAULT;
-
-    private static final Future<Boolean> FIXED_FUTURE = new Future<Boolean>() {
-
-        public boolean cancel(boolean mayInterruptIfRunning) {
-            return false;
-        }
-
-        public boolean isCancelled() {
-            return false;
-        }
-
-        public boolean isDone() {
-            return true;
-        }
-
-        public Boolean get() throws InterruptedException, ExecutionException {
-            return true;
-        }
-
-        public Boolean get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-            return true;
-        }
-    };
-
 
     /**
      * Send an email
@@ -65,8 +57,24 @@ public class Mail {
         }
     }
 
+    // Helper method for better readability
     protected static MailSystem currentMailSystem() {
         return mailSystemFactory.currentMailSystem();
+    }
+
+    /**
+     * Through this method you can substitute the current MailSystem. This is
+     * especially helpful for testing purposes like using mock libraries.
+     *
+     * @author Andreas Simon <a.simon@quagilis.de>
+     * @see    MailSystem
+     */
+    public static void useMailSystem(MailSystem mailSystem) {
+        mailSystemFactory = new StaticMailSystemFactory(mailSystem);
+    }
+
+    public static void resetMailSystem() {
+        mailSystemFactory = AbstractMailSystemFactory.DEFAULT;
     }
 
     public static Email buildMessage(Email email) throws EmailException {
@@ -246,8 +254,7 @@ public class Mail {
         @Override
         public Future<Boolean> sendMessage(Email email) {
             Mock.send(email);
-            return FIXED_FUTURE;
-
+            return new ImmediateFuture();
         }
 
     }
@@ -255,6 +262,7 @@ public class Mail {
     /**
      * Just kept for compatibility reasons, use test double substitution mechanism instead.
      *
+     * @see    Mail#useMailSystem(MailSystem)
      * @author Andreas Simon <a.simon@quagilis.de>
      */
     public static class Mock {
