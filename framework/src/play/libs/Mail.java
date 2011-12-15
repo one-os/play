@@ -27,6 +27,29 @@ public class Mail {
     public static Session session;
     public static boolean asynchronousSend = true;
 
+    private static final Future<Boolean> FIXED_FUTURE = new Future<Boolean>() {
+
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            return false;
+        }
+
+        public boolean isCancelled() {
+            return false;
+        }
+
+        public boolean isDone() {
+            return true;
+        }
+
+        public Boolean get() throws InterruptedException, ExecutionException {
+            return true;
+        }
+
+        public Boolean get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            return true;
+        }
+    };
+
 
     /**
      * Send an email
@@ -34,37 +57,28 @@ public class Mail {
     public static Future<Boolean> send(Email email) {
         try {
             email = buildMessage(email);
-            if (Play.configuration.getProperty("mail.smtp", "").equals("mock") && Play.mode == Play.Mode.DEV) {
-                Mock.send(email);
-                return new Future<Boolean>() {
-
-                    public boolean cancel(boolean mayInterruptIfRunning) {
-                        return false;
-                    }
-
-                    public boolean isCancelled() {
-                        return false;
-                    }
-
-                    public boolean isDone() {
-                        return true;
-                    }
-
-                    public Boolean get() throws InterruptedException, ExecutionException {
-                        return true;
-                    }
-
-                    public Boolean get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-                        return true;
-                    }
-                };
+            if (useMailMock()) {
+                return sendByMock(email);
+            } else {
+                return sendByMySelf(email);
             }
-
-            email.setMailSession(getSession());
-            return sendMessage(email);
         } catch (EmailException ex) {
             throw new MailException("Cannot send email", ex);
         }
+    }
+
+    private static Future<Boolean> sendByMySelf(Email email) {
+        email.setMailSession(getSession());
+        return sendMessage(email);
+    }
+
+    private static Future<Boolean> sendByMock(Email email) {
+        Mock.send(email);
+        return FIXED_FUTURE;
+    }
+
+    private static boolean useMailMock() {
+        return Play.configuration.getProperty("mail.smtp", "").equals("mock") && Play.mode == Play.Mode.DEV;
     }
 
     /**
@@ -242,6 +256,11 @@ public class Mail {
         }
     }
 
+    /**
+     * Just kept for compatibility reasons, use test double substitution mechanism.
+     *
+     * @author Andreas Simon <a.simon@quagilis.de>
+     */
     public static class Mock {
 
         static Map<String, String> emails = new HashMap<String, String>();
