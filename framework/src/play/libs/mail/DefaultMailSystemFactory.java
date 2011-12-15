@@ -2,26 +2,20 @@ package play.libs.mail;
 
 import play.Play;
 import play.libs.Mail;
+import play.libs.Mail.LegacyMockMailSystem;
 
 public class DefaultMailSystemFactory extends AbstractMailSystemFactory {
 
+    private static final LegacyMockMailSystem LEGACY_MOCK_MAIL_SYSTEM = new Mail.LegacyMockMailSystem();
+    private static final ProductionMailSystem PRODUCTION_MAIL_SYSTEM  = new ProductionMailSystem();
+
     @Override
     public MailSystem currentMailSystem() {
-        return mailSystem();
-    }
-
-    private static MailSystem mailSystem() {
-        MailSystem mailSystem;
-        if (useLegaycyMockMailSystem()) {
-            mailSystem = new Mail.LegacyMockMailSystem();
+        if (Play.useDefaultMockMailSystem()) {
+            return LEGACY_MOCK_MAIL_SYSTEM;
         } else {
-            mailSystem = new ProductionMailSystem();
+            return PRODUCTION_MAIL_SYSTEM;
         }
-        return mailSystem;
-    }
-
-    private static boolean useLegaycyMockMailSystem() {
-        return Play.configuration.getProperty("mail.smtp", "").equals("mock") && Play.mode == Play.Mode.DEV;
     }
 
 }
