@@ -5,7 +5,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-final class ImmediateFuture implements Future<Boolean> {
+public final class ImmediateFuture implements Future<Boolean> {
     public boolean cancel(boolean mayInterruptIfRunning) {
         return false;
     }
