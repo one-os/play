@@ -265,53 +265,11 @@ public class Mail {
      */
     public static class LegacyMockMailSystem implements MailSystem {
 
-        @Override
-        public Future<Boolean> sendMessage(Email email) {
-            LegacyMockMailSystem.send(email);
-            return new ImmediateFuture();
-        }
-
+        // Has to remain static to preserve the possibility of testing mail sending within Selenium tests
         static Map<String, String> emails = new HashMap<String, String>();
 
-
-        public static String getContent(Part message) throws MessagingException,
-                IOException {
-
-            if (message.getContent() instanceof String) {
-                return message.getContentType() + ": " + message.getContent() + " \n\t";
-            } else if (message.getContent() != null && message.getContent() instanceof Multipart) {
-                Multipart part = (Multipart) message.getContent();
-                String text = "";
-                for (int i = 0; i < part.getCount(); i++) {
-                    BodyPart bodyPart = part.getBodyPart(i);
-                    if (!Message.ATTACHMENT.equals(bodyPart.getDisposition())) {
-                        text += getContent(bodyPart);
-                    } else {
-                        text += "attachment: \n" +
-                       "\t\t name: " + (StringUtils.isEmpty(bodyPart.getFileName()) ? "none" : bodyPart.getFileName()) + "\n" +
-                       "\t\t disposition: " + bodyPart.getDisposition() + "\n" +
-                       "\t\t description: " +  (StringUtils.isEmpty(bodyPart.getDescription()) ? "none" : bodyPart.getDescription())  + "\n\t";
-                    }
-                }
-                return text;
-            }
-            if (message.getContent() != null && message.getContent() instanceof Part) {
-                if (!Message.ATTACHMENT.equals(message.getDisposition())) {
-                    return getContent((Part) message.getContent());
-                } else {
-                    return "attachment: \n" +
-                           "\t\t name: " + (StringUtils.isEmpty(message.getFileName()) ? "none" : message.getFileName()) + "\n" +
-                           "\t\t disposition: " + message.getDisposition() + "\n" +
-                           "\t\t description: " + (StringUtils.isEmpty(message.getDescription()) ? "none" : message.getDescription()) + "\n\t";
-                }
-            }
-
-            return "";
-        }
-
-
-        static void send(Email email) {
-
+        @Override
+        public Future<Boolean> sendMessage(Email email) {
             try {
                 final StringBuffer content = new StringBuffer();
                 Properties props = new Properties();
@@ -351,7 +309,43 @@ public class Mail {
             } catch (Exception e) {
                 Logger.error(e, "error sending mock email");
             }
+            return new ImmediateFuture();
+        }
 
+
+        private static String getContent(Part message) throws MessagingException,
+                IOException {
+
+            if (message.getContent() instanceof String) {
+                return message.getContentType() + ": " + message.getContent() + " \n\t";
+            } else if (message.getContent() != null && message.getContent() instanceof Multipart) {
+                Multipart part = (Multipart) message.getContent();
+                String text = "";
+                for (int i = 0; i < part.getCount(); i++) {
+                    BodyPart bodyPart = part.getBodyPart(i);
+                    if (!Message.ATTACHMENT.equals(bodyPart.getDisposition())) {
+                        text += getContent(bodyPart);
+                    } else {
+                        text += "attachment: \n" +
+                       "\t\t name: " + (StringUtils.isEmpty(bodyPart.getFileName()) ? "none" : bodyPart.getFileName()) + "\n" +
+                       "\t\t disposition: " + bodyPart.getDisposition() + "\n" +
+                       "\t\t description: " +  (StringUtils.isEmpty(bodyPart.getDescription()) ? "none" : bodyPart.getDescription())  + "\n\t";
+                    }
+                }
+                return text;
+            }
+            if (message.getContent() != null && message.getContent() instanceof Part) {
+                if (!Message.ATTACHMENT.equals(message.getDisposition())) {
+                    return getContent((Part) message.getContent());
+                } else {
+                    return "attachment: \n" +
+                           "\t\t name: " + (StringUtils.isEmpty(message.getFileName()) ? "none" : message.getFileName()) + "\n" +
+                           "\t\t disposition: " + message.getDisposition() + "\n" +
+                           "\t\t description: " + (StringUtils.isEmpty(message.getDescription()) ? "none" : message.getDescription()) + "\n\t";
+                }
+            }
+
+            return "";
         }
 
 
@@ -366,18 +360,17 @@ public class Mail {
             }
         }
 
-
         private static void removeTheLastComma(final StringBuffer content) {
             content.delete(content.length() - 2, content.length());
         }
 
-        public static String getLastMessageReceivedBy(String email) {
+
+        public String getLastMessageReceivedBy(String email) {
             return emails.get(email);
         }
         
-        public static void reset(){
+        public void reset(){
         	emails.clear();
         }
     }
 }
-
