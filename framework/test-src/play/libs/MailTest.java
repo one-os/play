@@ -13,6 +13,7 @@ import org.junit.Test;
 import play.PlayBuilder;
 import play.exceptions.MailException;
 import play.libs.mail.MailSystem;
+import play.utils.ImmediateFuture;
 
 public class MailTest {
 

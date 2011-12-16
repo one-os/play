@@ -1,9 +1,6 @@
-package play.libs;
+package play.utils;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 public final class ImmediateFuture implements Future<Boolean> {
     public boolean cancel(boolean mayInterruptIfRunning) {

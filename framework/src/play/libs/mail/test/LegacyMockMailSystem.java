@@ -20,9 +20,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.mail.Email;
 
 import play.Logger;
-import play.libs.ImmediateFuture;
 import play.libs.Mail;
 import play.libs.mail.MailSystem;
+import play.utils.ImmediateFuture;
 
 /**
  * Just kept for compatibility reasons, use test double substitution mechanism instead.
